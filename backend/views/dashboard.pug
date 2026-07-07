@@ -1,0 +1,82 @@
+extends layout
+
+block content
+  .page-header
+    div
+      h1 Dashboard
+      p Overview of your organization's assets and recent activities
+
+
+  .stats-grid.mb-4
+    .stat-card.animate-in(style="--card-accent: var(--accent-primary)")
+      .stat-icon(style="background:var(--accent-primary-soft); color:var(--accent-primary)")
+        i.fa-solid.fa-box
+      .stat-card-label Total Assets
+      .stat-card-value #{stats.totalAssets}
+
+    .stat-card.animate-in(style="--card-accent: var(--accent-emerald)")
+      .stat-icon(style="background:var(--accent-emerald-soft); color:var(--accent-emerald)")
+        i.fa-solid.fa-circle-check
+      .stat-card-label Available
+      .stat-card-value(style="color:var(--accent-emerald)") #{stats.availableAssets}
+
+    .stat-card.animate-in(style="--card-accent: var(--accent-amber)")
+      .stat-icon(style="background:var(--accent-amber-soft); color:var(--accent-amber)")
+        i.fa-solid.fa-arrow-right-from-bracket
+      .stat-card-label Issued
+      .stat-card-value(style="color:var(--accent-amber)") #{stats.issuedAssets}
+
+    .stat-card.animate-in(style="--card-accent: var(--accent-rose)")
+      .stat-icon(style="background:var(--accent-rose-soft); color:var(--accent-rose)")
+        i.fa-solid.fa-ban
+      .stat-card-label Scrapped
+      .stat-card-value(style="color:var(--accent-rose)") #{stats.scrappedAssets}
+
+    .stat-card.animate-in(style="--card-accent: var(--accent-blue)")
+      .stat-icon(style="background:var(--accent-blue-soft); color:var(--accent-blue)")
+        i.fa-solid.fa-tags
+      .stat-card-label Categories
+      .stat-card-value(style="color:var(--accent-blue)") #{stats.totalCategories}
+
+    .stat-card.animate-in(style="--card-accent: #6b7280")
+      .stat-icon(style="background:#f1f5f9; color:#6b7280")
+        i.fa-solid.fa-users
+      .stat-card-label Active Employees
+      .stat-card-value #{stats.totalEmployees}
+
+ 
+  .card-wrapper.animate-in
+    .card-wrapper-header
+      i.fa-solid.fa-clock-rotate-left(style="color:var(--accent-primary)")
+      span Recent Activity Logs
+
+    if recentHistory && recentHistory.length > 0
+      .table-responsive
+        table.activity-table
+          thead
+            tr
+              th Asset
+              th Employee
+              th Action
+              th Date
+              th Remarks
+          tbody
+            each log in recentHistory
+              tr
+                td
+                  div(style="font-weight:600; color:var(--text-heading)")= log.asset ? log.asset.name : 'Unknown'
+                  div(style="font-size:12px; color:var(--text-muted)")= log.asset ? `(${log.asset.asset_code})` : ''
+                td
+                  if log.employee
+                    div(style="font-weight:600; color:var(--text-heading)")= log.employee.name
+                    div(style="font-size:12px; color:var(--text-muted)")= `(${log.employee.emp_code})`
+                  else
+                    span(style="color:var(--text-muted)") —
+                td
+                  span.badge(class=`badge-${log.action}`)= log.action
+                td(style="color:var(--text-muted)")= log.action_date
+                td(style="color:var(--text-muted); max-width:200px")= log.remarks || '—'
+    else
+      div(style="text-align:center; padding:48px 20px")
+        i.fa-regular.fa-rectangle-list(style="font-size:40px; color:var(--text-muted); display:block; margin-bottom:12px")
+        p(style="color:var(--text-muted)") No recent activity yet. Start by adding assets and employees.

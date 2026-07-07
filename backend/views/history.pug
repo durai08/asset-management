@@ -1,0 +1,47 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>History Logs</h1>
+      <p>Audit trail of all asset status changes and assignments</p>
+
+
+  .table-responsive-container.animate-in
+    table#historyTable.table.table-striped.m-0(style="width:100%")
+      thead
+        tr
+          th Asset Info
+          th Employee Info
+          th Action
+          th Date
+          th Remarks
+      tbody
+        each log in history
+          tr
+            td
+              strong= log.asset ? log.asset.name : 'Unknown'
+              span.text-muted.small.d-block= log.asset ? `(${log.asset.asset_code})` : ''
+            td
+              if log.employee
+                strong= log.employee.name
+                span.text-muted.small.d-block= `(${log.employee.emp_code})`
+              else
+                span.text-secondary —
+            td
+              span.badge(class=`badge-${log.action}`)= log.action
+            td= log.action_date
+            td.text-secondary= log.remarks || '—'
+
+block scripts
+  script.
+    $(document).ready(function() {
+
+      $('#historyTable').DataTable({
+        order: [[3, 'desc']],
+        language: {
+          searchPlaceholder: "Search history records...",
+          search: ""
+        }
+      });
+    });

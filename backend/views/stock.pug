@@ -1,0 +1,46 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>Stock View</h1>
+      <p>Organize and monitor inventory levels by category</p>
+
+
+  .stats-grid.mb-5
+    .stat-card.animate-in(style="--card-accent: linear-gradient(135deg, var(--accent-indigo), var(--accent-violet))")
+      .stat-card-label Total Stock
+      .stat-card-value #{totals.total}
+    .stat-card.animate-in(style="--card-accent: linear-gradient(135deg, #10b981, #34d399)")
+      .stat-card-label Stock Available
+      .stat-card-value(style="color: var(--accent-emerald)") #{totals.available}
+    .stat-card.animate-in(style="--card-accent: linear-gradient(135deg, #f59e0b, #fbbf24)")
+      .stat-card-label Stock Issued
+      .stat-card-value(style="color: var(--accent-amber)") #{totals.issued}
+    .stat-card.animate-in(style="--card-accent: linear-gradient(135deg, #f43f5e, #fb7185)")
+      .stat-card-label Stock Scrapped
+      .stat-card-value(style="color: var(--accent-rose)") #{totals.scrapped}
+
+
+  if stock && stock.length > 0
+    .stock-grid.animate-in
+      each cat in stock
+        .stock-card
+          .stock-card-header
+            span.stock-card-title= cat.category
+            span.stock-card-total= cat.total + ' items'
+          .stock-card-body
+            .stock-counts
+              .stock-count-item
+                .stock-count-value(style="color: var(--accent-emerald)")= cat.available
+                .stock-count-label Available
+              .stock-count-item
+                .stock-count-value(style="color: var(--accent-amber)")= cat.issued
+                .stock-count-label Issued
+              .stock-count-item
+                .stock-count-value(style="color: var(--accent-rose)")= cat.scrapped
+                .stock-count-label Scrapped
+  else
+    .card.text-center.py-5.animate-in
+      i.fa-solid.fa-box-open.fa-3x.text-muted.mb-3
+      p.text-secondary No category stock data found. Add categories and assets first.

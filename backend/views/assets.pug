@@ -1,0 +1,322 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>Assets</h1>
+      <p>Manage organization assets and inventory</p>
+    button.btn.btn-primary(data-bs-toggle="modal" data-bs-target="#addAssetModal")
+      i.fa-solid.fa-plus.me-2
+      span Add Asset
+
+ 
+  .table-responsive-container.animate-in
+    table#assetsTable.table.table-striped.m-0(style="width:100%")
+      thead
+        tr
+          th Code
+          th Name
+          th Category
+          th Serial No.
+          th Purchase Date
+          th Cost
+          th Condition
+          th Status
+          th Actions
+      tbody
+        each asset in assets
+          tr
+            td
+              strong= asset.asset_code
+            td= asset.name
+            td= asset.category ? asset.category.name : '—'
+            td= asset.serial_number || '—'
+            td= asset.purchase_date || '—'
+            td
+              if asset.purchase_cost
+                | ₹#{Number(asset.purchase_cost).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              else
+                | —
+            td= asset.condition || 'Good'
+            td
+              span.badge(class=`badge-${asset.status}`)= asset.status
+            td
+              .actions-cell
+                button.btn.btn-sm.btn-secondary.edit-btn(
+                  data-id=asset.id
+                  data-code=asset.asset_code
+                  data-name=asset.name
+                  data-category=asset.category_id || ''
+                  data-serial=asset.serial_number || ''
+                  data-date=asset.purchase_date || ''
+                  data-cost=asset.purchase_cost || ''
+                  data-condition=asset.condition || 'Good'
+                  data-status=asset.status
+                  title="Edit Asset"
+                )
+                  i.fa-solid.fa-pencil
+                if asset.status === 'available'
+                  button.btn.btn-sm.btn-danger.scrap-btn(
+                    data-id=asset.id
+                    data-name=asset.name
+                    title="Scrap Asset"
+                  )
+                    i.fa-solid.fa-ban
+                button.btn.btn-sm.btn-danger.delete-btn(
+                  data-id=asset.id
+                  data-name=asset.name
+                  data-status=asset.status
+                  title="Delete Asset"
+                )
+                  i.fa-solid.fa-trash
+
+  #addAssetModal.modal.fade(tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5#addAssetModalLabel.modal-title Add Asset
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#addAssetForm
+          .modal-body
+            .row.g-3
+              .col-md-6
+                label.form-label(for="addAssetCode") Asset Code *
+                input#addAssetCode.form-control(type="text" required placeholder="AST-001")
+              .col-md-6
+                label.form-label(for="addName") Asset Name *
+                input#addName.form-control(type="text" required placeholder="Dell Latitude Laptop")
+              .col-md-6
+                label.form-label(for="addCategory") Category
+                select#addCategory.form-select
+                  option(value="") Select Category
+                  each cat in categories
+                    option(value=cat.id)= cat.name
+              .col-md-6
+                label.form-label(for="addSerial") Serial Number
+                input#addSerial.form-control(type="text" placeholder="SN-123456")
+              .col-md-6
+                label.form-label(for="addDate") Purchase Date
+                input#addDate.form-control(type="date")
+              .col-md-6
+                label.form-label(for="addCost") Purchase Cost (₹)
+                input#addCost.form-control(type="number" step="0.01" placeholder="45000")
+              .col-md-12
+                label.form-label(for="addCondition") Condition
+                select#addCondition.form-select
+                  option(value="New") New
+                  option(value="Good" selected) Good
+                  option(value="Fair") Fair
+                  option(value="Poor") Poor
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Create
+
+  #editAssetModal.modal.fade(tabindex="-1" aria-labelledby="editAssetModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5#editAssetModalLabel.modal-title Edit Asset
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#editAssetForm
+          input#editId(type="hidden")
+          .modal-body
+            .row.g-3
+              .col-md-6
+                label.form-label(for="editAssetCode") Asset Code *
+                input#editAssetCode.form-control(type="text" required placeholder="AST-001")
+              .col-md-6
+                label.form-label(for="editName") Asset Name *
+                input#editName.form-control(type="text" required placeholder="Dell Latitude Laptop")
+              .col-md-6
+                label.form-label(for="editCategory") Category
+                select#editCategory.form-select
+                  option(value="") Select Category
+                  each cat in categories
+                    option(value=cat.id)= cat.name
+              .col-md-6
+                label.form-label(for="editSerial") Serial Number
+                input#editSerial.form-control(type="text" placeholder="SN-123456")
+              .col-md-6
+                label.form-label(for="editDate") Purchase Date
+                input#editDate.form-control(type="date")
+              .col-md-6
+                label.form-label(for="editCost") Purchase Cost (₹)
+                input#editCost.form-control(type="number" step="0.01" placeholder="45000")
+              .col-md-6
+                label.form-label(for="editCondition") Condition
+                select#editCondition.form-select
+                  option(value="New") New
+                  option(value="Good") Good
+                  option(value="Fair") Fair
+                  option(value="Poor") Poor
+              .col-md-6
+                label.form-label(for="editStatus") Status
+                select#editStatus.form-select
+                  option(value="available") Available
+                  option(value="issued") Issued
+                  option(value="scrapped") Scrapped
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Update
+
+  #scrapAssetModal.modal.fade(tabindex="-1" aria-labelledby="scrapAssetLabel" aria-hidden="true")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5#scrapAssetLabel.modal-title Scrap Asset
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#scrapAssetForm
+          input#scrapId(type="hidden")
+          .modal-body
+            p Which asset are you scrapping? 
+              strong#scrapAssetName
+            .mb-3
+              label.form-label(for="scrapRemarks") Reason / Remarks *
+              textarea#scrapRemarks.form-control(rows="3" required placeholder="Reason for scrapping (e.g. broken, obsolete)")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-danger(type="submit") Confirm Scrap
+
+block scripts
+  script.
+    $(document).ready(function() {
+      
+      $('#assetsTable').DataTable({
+        order: [[0, 'desc']],
+        language: {
+          searchPlaceholder: "Search assets...",
+          search: ""
+        }
+      });
+
+      /
+      $('#addAssetForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          asset_code: $('#addAssetCode').val().trim(),
+          name: $('#addName').val().trim(),
+          category_id: $('#addCategory').val() ? parseInt($('#addCategory').val()) : null,
+          serial_number: $('#addSerial').val().trim() || null,
+          purchase_date: $('#addDate').val() || null,
+          purchase_cost: $('#addCost').val() ? parseFloat($('#addCost').val()) : null,
+          condition: $('#addCondition').val()
+        };
+        $.ajax({
+          url: '/api/assets',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to create asset');
+          }
+        });
+      });
+
+      
+      $('.edit-btn').on('click', function() {
+        const id = $(this).data('id');
+        const code = $(this).data('code');
+        const name = $(this).data('name');
+        const categoryId = $(this).data('category');
+        const serial = $(this).data('serial');
+        const date = $(this).data('date');
+        const cost = $(this).data('cost');
+        const condition = $(this).data('condition');
+        const status = $(this).data('status');
+
+        $('#editId').val(id);
+        $('#editAssetCode').val(code);
+        $('#editName').val(name);
+        $('#editCategory').val(categoryId);
+        $('#editSerial').val(serial);
+        $('#editDate').val(date);
+        $('#editCost').val(cost);
+        $('#editCondition').val(condition);
+        $('#editStatus').val(status);
+
+        const editModal = new bootstrap.Modal(document.getElementById('editAssetModal'));
+        editModal.show();
+      });
+
+      
+      $('#editAssetForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#editId').val();
+        const data = {
+          asset_code: $('#editAssetCode').val().trim(),
+          name: $('#editName').val().trim(),
+          category_id: $('#editCategory').val() ? parseInt($('#editCategory').val()) : null,
+          serial_number: $('#editSerial').val().trim() || null,
+          purchase_date: $('#editDate').val() || null,
+          purchase_cost: $('#editCost').val() ? parseFloat($('#editCost').val()) : null,
+          condition: $('#editCondition').val(),
+          status: $('#editStatus').val()
+        };
+        $.ajax({
+          url: '/api/assets/' + id,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to update asset');
+          }
+        });
+      });
+
+      
+      $('.scrap-btn').on('click', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        $('#scrapId').val(id);
+        $('#scrapAssetName').text(name);
+        $('#scrapRemarks').val('');
+
+        const scrapModal = new bootstrap.Modal(document.getElementById('scrapAssetModal'));
+        scrapModal.show();
+      });
+
+      
+      $('#scrapAssetForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#scrapId').val();
+        const remarks = $('#scrapRemarks').val().trim();
+        
+        $.ajax({
+          url: `/api/assets/${id}/scrap`,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify({ remarks: remarks }),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Scrap action failed');
+          }
+        });
+      });
+
+      
+      $('.delete-btn').on('click', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        const status = $(this).data('status');
+        if (confirm(`Are you sure you want to delete asset "${name}"?`)) {
+          $.ajax({
+            url: '/api/assets/' + id,
+            type: 'DELETE',
+            success: function() {
+              location.reload();
+            },
+            error: function(xhr) {
+              alert(xhr.responseJSON?.message || 'Delete failed.');
+            }
+          });
+        }
+      });
+    });

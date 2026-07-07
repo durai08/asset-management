@@ -1,0 +1,119 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>Return Asset</h1>
+      <p>Return currently issued assets back to inventory</p>
+
+    
+  .table-responsive-container.animate-in
+    table#returnsTable.table.table-striped.m-0(style="width:100%")
+      thead
+        tr
+          th Asset Info
+          th Issued To
+          th Issue Date
+          th Expected Return
+          th Remarks
+          th Action
+      tbody
+        each issue in issued
+          tr
+            td
+              strong= issue.asset ? issue.asset.name : 'Unknown'
+              span.text-muted.small.d-block= issue.asset ? `(${issue.asset.asset_code})` : ''
+            td
+              strong= issue.employee ? issue.employee.name : 'Unknown'
+              span.text-muted.small.d-block= issue.employee ? `(${issue.employee.emp_code})` : ''
+            td= issue.issue_date
+            td= issue.expected_return_date || '—'
+            td.text-secondary= issue.remarks || '—'
+            td
+              button.btn.btn-sm.btn-success.return-btn(
+                data-id=issue.id
+                data-asset=issue.asset ? `${issue.asset.name} (${issue.asset.asset_code})` : 'Unknown Asset'
+                data-employee=issue.employee ? `${issue.employee.name} (${issue.employee.emp_code})` : 'Unknown Employee'
+                title="Return Asset"
+              )
+                i.fa-solid.fa-arrow-rotate-left
+
+
+  #returnAssetModal.modal.fade(tabindex="-1" aria-labelledby="returnAssetModalLabel" aria-hidden="true")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5#returnAssetModalLabel.modal-title Return Asset
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#returnAssetForm
+          input#returnIssueId(type="hidden")
+          .modal-body
+            .mb-3.p-3(style="background: rgba(255, 255, 255, 0.05); border-radius: var(--radius-md); border: 1px solid var(--border-color);")
+              div.text-secondary.small.mb-1 Returning:
+              div#returnAssetInfo.fw-bold.mb-2
+              div.text-secondary.small.mb-1 Issued to:
+              div#returnEmployeeInfo.text-secondary
+            .mb-3
+              label.form-label(for="actualReturnDate") Date Returned *
+              input#actualReturnDate.form-control(type="date" required)
+            .mb-3
+              label.form-label(for="returnRemarks") Remarks / Details
+              textarea#returnRemarks.form-control(rows="3" placeholder="Optional notes (e.g. returned in good condition)")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-success(type="submit") Confirm Return
+
+block scripts
+  script.
+    $(document).ready(function() {
+      
+      const today = new Date().toISOString().split('T')[0];
+      $('#actualReturnDate').val(today);
+
+     
+      $('#returnsTable').DataTable({
+        order: [[2, 'desc']],
+        language: {
+          searchPlaceholder: "Search issued assets...",
+          search: ""
+        }
+      });
+
+     
+      $('.return-btn').on('click', function() {
+        const id = $(this).data('id');
+        const assetName = $(this).data('asset');
+        const empName = $(this).data('employee');
+
+        $('#returnIssueId').val(id);
+        $('#returnAssetInfo').text(assetName);
+        $('#returnEmployeeInfo').text(empName);
+        $('#returnRemarks').val('');
+
+        const returnModal = new bootstrap.Modal(document.getElementById('returnAssetModal'));
+        returnModal.show();
+      });
+
+     
+      $('#returnAssetForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#returnIssueId').val();
+        const data = {
+          actual_return_date: $('#actualReturnDate').val(),
+          remarks: $('#returnRemarks').val().trim() || null
+        };
+
+        $.ajax({
+          url: '/api/returns/' + id,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to return asset');
+          }
+        });
+      });
+    });

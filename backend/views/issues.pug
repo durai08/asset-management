@@ -1,0 +1,110 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>Issue Asset</h1>
+      <p>Assign available assets to active employees</p>
+    button.btn.btn-primary(data-bs-toggle="modal" data-bs-target="#issueAssetModal")
+      i.fa-solid.fa-arrow-right-from-bracket.me-2
+      span Issue Asset
+
+
+  .table-responsive-container.animate-in
+    table#issuesTable.table.table-striped.m-0(style="width:100%")
+      thead
+        tr
+          th Asset Info
+          th Issued To
+          th Issue Date
+          th Expected Return
+          th Status
+          th Remarks
+      tbody
+        each issue in issues
+          tr
+            td
+              strong= issue.asset ? issue.asset.name : 'Unknown'
+              span.text-muted.small.d-block= issue.asset ? `(${issue.asset.asset_code})` : ''
+            td
+              strong= issue.employee ? issue.employee.name : 'Unknown'
+              span.text-muted.small.d-block= issue.employee ? `(${issue.employee.emp_code})` : ''
+            td= issue.issue_date
+            td= issue.expected_return_date || '—'
+            td
+              span.badge(class=`badge-${issue.status}`)= issue.status
+            td.text-secondary= issue.remarks || '—'
+
+  #issueAssetModal.modal.fade(tabindex="-1" aria-labelledby="issueAssetModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5#issueAssetModalLabel.modal-title Issue Asset
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#issueAssetForm
+          .modal-body
+            .mb-3
+              label.form-label(for="issueAssetSelect") Select Asset *
+              select#issueAssetSelect.form-select(required)
+                option(value="") Choose an available asset...
+                each asset in assets
+                  option(value=asset.id)= `${asset.name} (${asset.asset_code})`
+            .mb-3
+              label.form-label(for="issueEmployeeSelect") Issue To Employee *
+              select#issueEmployeeSelect.form-select(required)
+                option(value="") Choose an active employee...
+                each emp in employees
+                  option(value=emp.id)= `${emp.name} (${emp.emp_code})`
+            .row.g-3.mb-3
+              .col-md-6
+                label.form-label(for="issueDate") Issue Date *
+                input#issueDate.form-control(type="date" required)
+              .col-md-6
+                label.form-label(for="expectedReturnDate") Expected Return Date
+                input#expectedReturnDate.form-control(type="date")
+            .mb-3
+              label.form-label(for="issueRemarks") Remarks
+              textarea#issueRemarks.form-control(rows="3" placeholder="Optional notes...")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Issue Asset
+
+block scripts
+  script.
+    $(document).ready(function() {
+
+      const today = new Date().toISOString().split('T')[0];
+      $('#issueDate').val(today);
+
+      $('#issuesTable').DataTable({
+        order: [[2, 'desc']],
+        language: {
+          searchPlaceholder: "Search issues...",
+          search: ""
+        }
+      });
+
+      $('#issueAssetForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          asset_id: parseInt($('#issueAssetSelect').val()),
+          employee_id: parseInt($('#issueEmployeeSelect').val()),
+          issue_date: $('#issueDate').val(),
+          expected_return_date: $('#expectedReturnDate').val() || null,
+          remarks: $('#issueRemarks').val().trim() || null
+        };
+
+        $.ajax({
+          url: '/api/issues',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to issue asset');
+          }
+        });
+      });
+    });

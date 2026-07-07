@@ -1,0 +1,166 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>Categories</h1>
+      <p>Manage asset categories</p>
+    button.btn.btn-primary(data-bs-toggle="modal" data-bs-target="#addCategoryModal")
+      i.fa-solid.fa-plus.me-2
+      span Add Category
+
+  
+  .table-responsive-container.animate-in
+    table#categoriesTable.table.table-striped.m-0(style="width:100%")
+      thead
+        tr
+          th Name
+          th Description
+          th Actions
+      tbody
+        each cat in categories
+          tr
+            td= cat.name
+            td.text-secondary= cat.description || '—'
+            td
+              .actions-cell
+                button.btn.btn-sm.btn-secondary.edit-btn(
+                  data-id=cat.id
+                  data-name=cat.name
+                  data-description=cat.description || ''
+                  title="Edit Category"
+                )
+                  i.fa-solid.fa-pencil
+                button.btn.btn-sm.btn-danger.delete-btn(
+                  data-id=cat.id
+                  data-name=cat.name
+                  title="Delete Category"
+                )
+                  i.fa-solid.fa-trash
+
+  
+  #addCategoryModal.modal.fade(tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5#addCategoryModalLabel.modal-title Add Category
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#addCategoryForm
+          .modal-body
+            .mb-3
+              label.form-label(for="addName") Category Name *
+              input#addName.form-control(type="text" required placeholder="Laptops")
+            .mb-3
+              label.form-label(for="addDescription") Description
+              textarea#addDescription.form-control(rows="3" placeholder="Category description...")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Create
+
+  
+  #editCategoryModal.modal.fade(tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5#editCategoryModalLabel.modal-title Edit Category
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#editCategoryForm
+          input#editId(type="hidden")
+          .modal-body
+            .mb-3
+              label.form-label(for="editName") Category Name *
+              input#editName.form-control(type="text" required placeholder="Laptops")
+            .mb-3
+              label.form-label(for="editDescription") Description
+              textarea#editDescription.form-control(rows="3" placeholder="Category description...")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Update
+
+block scripts
+  script.
+    $(document).ready(function() {
+      
+      $('#categoriesTable').DataTable({
+        order: [[0, 'asc']],
+        language: {
+          searchPlaceholder: "Search categories...",
+          search: ""
+        }
+      });
+
+
+      $('#addCategoryForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          name: $('#addName').val().trim(),
+          description: $('#addDescription').val().trim()
+        };
+        $.ajax({
+          url: '/api/categories',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to create category');
+          }
+        });
+      });
+
+      
+      $('.edit-btn').on('click', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        const desc = $(this).data('description');
+
+        $('#editId').val(id);
+        $('#editName').val(name);
+        $('#editDescription').val(desc);
+
+        const editModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+        editModal.show();
+      });
+
+  
+      $('#editCategoryForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#editId').val();
+        const data = {
+          name: $('#editName').val().trim(),
+          description: $('#editDescription').val().trim()
+        };
+        $.ajax({
+          url: '/api/categories/' + id,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to update category');
+          }
+        });
+      });
+
+      
+      $('.delete-btn').on('click', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        if (confirm(`Are you sure you want to delete category "${name}"?`)) {
+          $.ajax({
+            url: '/api/categories/' + id,
+            type: 'DELETE',
+            success: function() {
+              location.reload();
+            },
+            error: function(xhr) {
+              alert(xhr.responseJSON?.message || 'Delete failed — category may have associated assets.');
+            }
+          });
+        }
+      });
+    });

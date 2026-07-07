@@ -1,0 +1,233 @@
+extends layout
+
+block content
+  .page-header
+    .page-header-left
+      <h1>Employees</h1>
+      <p>Manage your organization's employees</p>
+    button.btn.btn-primary(data-bs-toggle="modal" data-bs-target="#addEmployeeModal")
+      i.fa-solid.fa-user-plus.me-2
+      span Add Employee
+
+
+  .table-responsive-container.animate-in
+    .table-responsive
+      table#employeesTable.table.table-striped.m-0(style="width:100%")
+        thead
+          tr
+            th Code
+            th Name
+            th Department
+            th Designation
+            th Email
+            th Phone
+            th Status
+            th Actions
+        tbody
+          each emp in employees
+            tr
+              td
+                strong= emp.emp_code
+              td= emp.name
+              td= emp.department || '—'
+              td= emp.designation || '—'
+              td= emp.email || '—'
+              td= emp.phone || '—'
+              td
+                span.badge(class=(emp.is_active ? 'badge-active' : 'badge-inactive'))
+                  = emp.is_active ? 'Active' : 'Inactive'
+              td
+                .actions-cell
+                  button.btn.btn-sm.btn-secondary.edit-btn(
+                    data-id=emp.id
+                    data-code=emp.emp_code
+                    data-name=emp.name
+                    data-department=emp.department || ''
+                    data-designation=emp.designation || ''
+                    data-email=emp.email || ''
+                    data-phone=emp.phone || ''
+                    data-active=emp.is_active.toString()
+                    title="Edit Employee"
+                  )
+                    i.fa-solid.fa-user-pen
+                  button.btn.btn-sm.btn-danger.delete-btn(
+                    data-id=emp.id
+                    data-name=emp.name
+                    title="Delete Employee"
+                  )
+                    i.fa-solid.fa-trash
+
+
+  #addEmployeeModal.modal.fade(tabindex="-1" aria-labelledby="addEmployeeModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5#addEmployeeModalLabel.modal-title Add Employee
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#addEmployeeForm
+          .modal-body
+            .row.g-3
+              .col-md-6
+                label.form-label(for="addEmpCode") Employee Code *
+                input#addEmpCode.form-control(type="text" required placeholder="EMP-001")
+              .col-md-6
+                label.form-label(for="addName") Full Name *
+                input#addName.form-control(type="text" required placeholder="John Doe")
+              .col-md-6
+                label.form-label(for="addDepartment") Department
+                input#addDepartment.form-control(type="text" placeholder="Engineering")
+              .col-md-6
+                label.form-label(for="addDesignation") Designation
+                input#addDesignation.form-control(type="text" placeholder="Software Engineer")
+              .col-md-6
+                label.form-label(for="addEmail") Email Address
+                input#addEmail.form-control(type="email" placeholder="john@company.com")
+              .col-md-6
+                label.form-label(for="addPhone") Phone Number
+                input#addPhone.form-control(type="text" placeholder="+91 9876543210")
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Create
+
+
+  #editEmployeeModal.modal.fade(tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5#editEmployeeModalLabel.modal-title Edit Employee
+          button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
+        form#editEmployeeForm
+          input#editId(type="hidden")
+          .modal-body
+            .row.g-3
+              .col-md-6
+                label.form-label(for="editEmpCode") Employee Code *
+                input#editEmpCode.form-control(type="text" required placeholder="EMP-001")
+              .col-md-6
+                label.form-label(for="editName") Full Name *
+                input#editName.form-control(type="text" required placeholder="John Doe")
+              .col-md-6
+                label.form-label(for="editDepartment") Department
+                input#editDepartment.form-control(type="text" placeholder="Engineering")
+              .col-md-6
+                label.form-label(for="editDesignation") Designation
+                input#editDesignation.form-control(type="text" placeholder="Software Engineer")
+              .col-md-6
+                label.form-label(for="editEmail") Email Address
+                input#editEmail.form-control(type="email" placeholder="john@company.com")
+              .col-md-6
+                label.form-label(for="editPhone") Phone Number
+                input#editPhone.form-control(type="text" placeholder="+91 9876543210")
+              .col-md-12
+                .form-check.form-switch.mt-2
+                  input#editActive.form-check-input(type="checkbox")
+                  label.form-check-label(for="editActive") Employee Account Active
+          .modal-footer
+            button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Cancel
+            button.btn.btn-primary(type="submit") Update
+
+block scripts
+  script.
+    $(document).ready(function() {
+
+      $('#employeesTable').DataTable({
+        order: [[1, 'asc']],
+        language: {
+          searchPlaceholder: "Search employees...",
+          search: ""
+        }
+      });
+
+      $('#addEmployeeForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          emp_code: $('#addEmpCode').val().trim(),
+          name: $('#addName').val().trim(),
+          department: $('#addDepartment').val().trim(),
+          designation: $('#addDesignation').val().trim(),
+          email: $('#addEmail').val().trim(),
+          phone: $('#addPhone').val().trim()
+        };
+        $.ajax({
+          url: '/api/employees',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to create employee');
+          }
+        });
+      });
+
+      
+      $('.edit-btn').on('click', function() {
+        const id = $(this).data('id');
+        const code = $(this).data('code');
+        const name = $(this).data('name');
+        const dept = $(this).data('department');
+        const desg = $(this).data('designation');
+        const email = $(this).data('email');
+        const phone = $(this).data('phone');
+        const isActive = $(this).data('active') === 'true';
+
+        $('#editId').val(id);
+        $('#editEmpCode').val(code);
+        $('#editName').val(name);
+        $('#editDepartment').val(dept);
+        $('#editDesignation').val(desg);
+        $('#editEmail').val(email);
+        $('#editPhone').val(phone);
+        $('#editActive').prop('checked', isActive);
+
+        const editModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'));
+        editModal.show();
+      });
+
+        
+      $('#editEmployeeForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#editId').val();
+        const data = {
+          emp_code: $('#editEmpCode').val().trim(),
+          name: $('#editName').val().trim(),
+          department: $('#editDepartment').val().trim(),
+          designation: $('#editDesignation').val().trim(),
+          email: $('#editEmail').val().trim(),
+          phone: $('#editPhone').val().trim(),
+          is_active: $('#editActive').is(':checked')
+        };
+        $.ajax({
+          url: '/api/employees/' + id,
+          type: 'PUT',
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: function() {
+            location.reload();
+          },
+          error: function(xhr) {
+            alert(xhr.responseJSON?.message || 'Failed to update employee');
+          }
+        });
+      });
+
+      
+      $('.delete-btn').on('click', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        if (confirm(`Are you sure you want to delete employee "${name}"?`)) {
+          $.ajax({
+            url: '/api/employees/' + id,
+            type: 'DELETE',
+            success: function() {
+              location.reload();
+            },
+            error: function(xhr) {
+              alert(xhr.responseJSON?.message || 'Failed to delete employee.');
+            }
+          });
+        }
+      });
+    });
